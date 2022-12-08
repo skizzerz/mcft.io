@@ -24,19 +24,20 @@ rm -rf $BAKPATH
 mv $DESTPATH $BAKPATH
 
 ##########
-# ensure dependencies are up to date
-##########
-echo "Ensuring updated dependencies"
-cd $SOURCEPATH
-npm install
-
-##########
 # copy files
 ##########
 echo "Copying files"
 mkdir $DESTPATH
 mkdir $DESTPATH/tmp
+cd $SOURCEPATH
 cp -r . $DESTPATH
+
+##########
+# ensure dependencies are up to date
+##########
+echo "Ensuring updated dependencies"
+cd $DESTPATH
+npm install
 
 ##########
 # cleanup unnecessary files
