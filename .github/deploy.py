@@ -47,10 +47,10 @@ def run():
         "description": "Aborted due to error in GitHub Actions run"
     }))
 
-    # Updates the repo to the latest master revision
+    # Updates the repo to the latest main revision
     res = cpanel_api("VersionControl", "update", {
         "repository_root": cp_repo,
-        "branch": "master"
+        "branch": "main"
     })
 
     # check if we can execute a deploy
