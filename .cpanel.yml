@@ -1,0 +1,4 @@
+---
+deployment:
+  tasks:
+    - /bin/bash /home/minecraft/repositories/mcft.io/.github/deploy.sh
