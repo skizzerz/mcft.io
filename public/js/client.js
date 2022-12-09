@@ -16,7 +16,7 @@ function App(props) {
   const updateData = async (controller) => {
     const signal = controller.signal;
     setStatus("fetching");
-    const res = await fetch("/reddisk/home/output.json", { signal });
+    const res = await fetch("/reddisk/output.json", { signal });
     try {
       if (res.status != 200) {
         setStatus(res.status);
