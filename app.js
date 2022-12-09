@@ -20,7 +20,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(lessMiddleware(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'public')));
-
+app.use("/reddisk", express.static("/mnt/minecraft/62e65afb-e9d7-46f3-869b-d5324ed52d7a"))
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
