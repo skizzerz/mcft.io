@@ -19,8 +19,9 @@ function Chart({dataY, dataX}) {
   React.useLayoutEffect(() => {
     if (Array.isArray(dataX) && Array.isArray(dataY)) {
       const defined = (d, i) => !isNaN(dataX[i]) && !isNaN(dataY[i]) && dataX[i] !== null && dataY[i] !== null;
-      const I = d3.range(dataX.length);
-      const D = d3.map(I, defined)
+      var I = d3.range(dataX.length);
+      const D = d3.map(I, defined);
+      I = I.filter(i => D[i]).sort((a, b) => +dataX[a] - +dataX[b]);
       const yScale = d3.scaleLinear()
         .domain([0, d3.max(dataY)])
         .range([height - 40, 20])
@@ -43,7 +44,7 @@ function Chart({dataY, dataX}) {
       d3.select(refPath.current)
         .attr("fill", "none")
         .attr("stroke", "black")
-        .attr("d", line(I.filter(i => D[i])))
+        .attr("d", line(I))
     }
   }, [dataY, dataX, width, height])
 
