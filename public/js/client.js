@@ -7,6 +7,16 @@ function Log(props) {
   }
   return React.createElement('ul', null, ...children);
 }
+function MapDisplay({data}) {
+  const children = []
+  if (typeof data == "object") {
+    const keys = Object.keys(data).sort();
+    for (const v of keys) {
+      children.push(React.createElement('li', null, `${v} - ${data[v]}`));
+    }
+  }
+  return React.createElement('ul', null, ...children);
+}
 
 function applyFIR(data, kernel) {
   const revKernel = [...kernel].reverse();
@@ -146,13 +156,17 @@ function App(props) {
       controller.abort();
     };
   }, []);
-  return React.createElement('div', null, `Hello ${props.toWhat} - ${status}`,
+  return React.createElement('div', null, `Status: ${status}`,
     React.createElement(AnyChart, { charts: data?.charts }),
+    'Items:',
+    React.createElement(MapDisplay, { data: data?.memon?.items }),
+    'Log:',
     React.createElement(Log, { log: data?.log }),
+    'Raw Data:',
     React.createElement('div', null, JSON.stringify(data)));
 }
 
 ReactDOM.render(
-  React.createElement(App, { toWhat: 'world' }),
+  React.createElement(App),
   document.getElementById('root')
 );
