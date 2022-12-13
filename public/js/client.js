@@ -7,7 +7,7 @@ function Log(props) {
   }
   return React.createElement('ul', null, ...children);
 }
-function MapDisplay({data}) {
+function MapDisplay({ data }) {
   const children = []
   if (typeof data == "object") {
     const keys = Object.keys(data).sort();
@@ -99,6 +99,32 @@ function Chart({ dataY, dataX, useDerivative, useSmooth }) {
   );
 }
 
+function CraftingMonitor({ crafting }) {
+  if (!crafting) return;
+  return React.createElement('ol', {},
+    ...Object.keys(crafting).sort().map((k) => {
+      const v = crafting[k];
+      if (v.isBusy) {
+        const making = v.finalOutput ? `${v.finalOutput.size}x ${v.finalOutput.label}` : 'unknown';
+        return React.createElement('li', {}, `#${k} making ${making}`,
+          React.createElement('ul', {}, ...Object.keys(v.activeItems).map((k) => {
+            const w = v.activeItems[k];
+            return React.createElement('li', {}, `Active: ${w.size}x ${w.label}`);
+          }), ...Object.keys(v.pendingItems).map((k) => {
+            const w = v.pendingItems[k];
+            return React.createElement('li', {}, `Pending: ${w.size}x ${w.label}`);
+          }), ...Object.keys(v.storedItems).map((k) => {
+            const w = v.storedItems[k];
+            return React.createElement('li', {}, `Stored: ${w.size}x ${w.label}`);
+          }))
+        )
+      } else {
+        return React.createElement('li', {}, `#${k} Inactive`)
+      }
+    })
+  )
+}
+
 function ComboBox({ options, state }) {
   const [selected, setSelected] = state;
   const els = options.map((n) => React.createElement('option', { value: n }, n));
@@ -160,6 +186,8 @@ function App(props) {
     React.createElement(AnyChart, { charts: data?.charts }),
     'Items:',
     React.createElement(MapDisplay, { data: data?.memon?.items }),
+    'Crafting:',
+    React.createElement(CraftingMonitor, { crafting: data?.memon?.crafting }),
     'Log:',
     React.createElement(Log, { log: data?.log }),
     'Raw Data:',
