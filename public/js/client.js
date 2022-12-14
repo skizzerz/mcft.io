@@ -35,9 +35,11 @@ function Chart({ dataY, dataX, useDerivative, useSmooth }) {
   const width = 700;
   const height = 350;
   const refSVG = React.useRef();
+  const refG = React.useRef();
   const refAxisX = React.useRef();
   const refAxisY = React.useRef();
   const refPath = React.useRef();
+  const refTransform = React.useRef();
 
   React.useLayoutEffect(() => {
     if (Array.isArray(dataX) && Array.isArray(dataY)) {
@@ -81,21 +83,41 @@ function Chart({ dataY, dataX, useDerivative, useSmooth }) {
         .x(i => xScale(dataX[i]))
         .y(i => yScale(dataY[i]));
 
-      d3.select(refSVG.current).attr("viewBox", [0, 0, width, height]);
+      let zoom = d3.zoom()
+        .on('zoom', handleZoom)
+        .scaleExtent([1, 20])
+        .translateExtent([[0, 0], [width, height]]);
+      d3.select(refSVG.current)
+        .attr("viewBox", [0, 0, width, height])
+        .call(zoom);
       d3.select(refAxisX.current).attr("transform", `translate(0,${height - 40})`).call(xAxis);
       d3.select(refAxisY.current).attr("transform", `translate(30, 0)`).call(yAxis);
+
+      function handleZoom({ transform }) {
+        refTransform.current = transform
+        // d3.select(refG.current)
+        //   .attr('transform', `translate(${transform.x}, 0) scale(${transform.k}, 1)`);
+        const newScaleX = transform.rescaleX(xScale);
+        xAxis.scale(newScaleX);
+        d3.select(refAxisX.current).call(xAxis);
+        d3.select(refPath.current)
+          .attr("d", line.x(i => newScaleX(dataX[i]))(I));
+      }
 
       d3.select(refPath.current)
         .attr("fill", "none")
         .attr("stroke", "black")
         .attr("d", line(I))
+
+      if (refTransform.current) { handleZoom({ transform: refTransform.current }); }
     }
   }, [dataY, dataX, width, height, useDerivative, useSmooth])
 
   return React.createElement('svg', { width: '100%', height: '350px', ref: refSVG },
     React.createElement('g', { ref: refAxisX }),
     React.createElement('g', { ref: refAxisY }),
-    React.createElement('path', { ref: refPath })
+    React.createElement('g', { ref: refG },
+      React.createElement('path', { ref: refPath }))
   );
 }
 
@@ -135,22 +157,21 @@ function ComboBox({ options, state }) {
 }
 
 function AnyChart({ charts }) {
-  const ch = charts?.d
   const selectChart = React.useState(null);
   const selectFilter = React.useState('none');
-  if (!ch) return React.createElement('div');
+  if (!charts) return React.createElement('div');
 
   const useDerivative = selectFilter[0] && { none: false, smooth: false, derivative: true, smoothDerivative: true }[selectFilter[0]];
   const useSmooth = selectFilter[0] && { none: false, smooth: true, derivative: false, smoothDerivative: true }[selectFilter[0]];
 
   return React.createElement('div', null,
-    React.createElement(ComboBox, { options: Object.keys(ch).sort(), state: selectChart }),
+    React.createElement(ComboBox, { options: Object.keys(charts).sort(), state: selectChart }),
     React.createElement(ComboBox, { options: ['none', 'smooth', 'derivative', 'smoothDerivative'], state: selectFilter }),
-    React.createElement(Chart, { dataY: ch[selectChart[0]], dataX: ch.tick, useDerivative, useSmooth })
+    React.createElement(Chart, { dataY: charts[selectChart[0]], dataX: charts.tick, useDerivative, useSmooth })
   );
 }
 
-function App(props) {
+function reloadFile(uri, isJson) {
   const [data, setData] = React.useState(null);
   const [status, setStatus] = React.useState("init");
   const timeout = React.useRef(true);
@@ -158,13 +179,16 @@ function App(props) {
   const updateData = async (controller) => {
     const signal = controller.signal;
     setStatus("fetching");
-    const res = await fetch("/reddisk/output.json", { signal });
+    const res = await fetch(uri, { signal });
     try {
       if (res.status != 200) {
         setStatus(res.status);
       } else {
-        const json = await res.json();
-        setData(json);
+        if (isJson) {
+          setData(await res.json());
+        } else {
+          setData(await res.text());
+        }
         setStatus("loaded");
       }
     } catch (e) {
@@ -182,8 +206,33 @@ function App(props) {
       controller.abort();
     };
   }, []);
+  return [data, status]
+}
+
+function jsonl_to_charts(jsonl) {
+  if (!jsonl) return null;
+  const lines = jsonl.split('\n')
+    .map((line) => { try { return JSON.parse(line); } catch { return null; } })
+    .filter((doc) => doc != null)
+  const ret = {}
+  for (const i in lines) {
+    const line = lines[i];
+    for (const k in line) {
+      const v = line[k];
+      if (!(k in ret)) { ret[k] = new Array(lines.length).fill(null); }
+      ret[k][i] = v;
+    }
+  }
+  return ret;
+}
+
+function App() {
+  const [data, status] = reloadFile("/reddisk/output.json", true);
+  const [data2, status2] = reloadFile("/reddisk/charts.jsonl", false);
+
   return React.createElement('div', null, `Status: ${status}`,
-    React.createElement(AnyChart, { charts: data?.charts }),
+    React.createElement(AnyChart, { charts: data?.charts?.d }),
+    React.createElement(AnyChart, { charts: jsonl_to_charts(data2) }),
     'Items:',
     React.createElement(MapDisplay, { data: data?.memon?.items }),
     'Crafting:',
