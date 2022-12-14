@@ -63,10 +63,10 @@ function Chart({ dataY, dataX, useDerivative, useSmooth }) {
         dataY = newDataY;
       }
       if (useSmooth) {
-        const newDataY = applyFIR(dataY, [0.05, 0.1, 0.15, 0.2, 0.2, 0.15, 0.1, 0.05]);
-        dataY = newDataY;
+        dataY = applyFIR(dataY, [0.05, 0.1, 0.15, 0.2, 0.2, 0.15, 0.1, 0.05]);
+        dataX = applyFIR(dataX, [0.05, 0.1, 0.15, 0.2, 0.2, 0.15, 0.1, 0.05]);
       }
-      I = I.filter(i => !isNaN(dataY[i]))
+      I = I.filter(i => !isNaN(dataY[i]) && !isNaN(dataX[i]))
 
       const yScale = d3.scaleLinear()
         .domain(!useDerivative ? [0, d3.max(dataY)] : [Math.min(0, d3.min(dataY)), Math.max(0, d3.max(dataY))])
