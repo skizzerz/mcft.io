@@ -97,10 +97,10 @@ function Chart({ dataY, dataX, useDerivative, scaleDataY, useSmooth }) {
 
       const xScaleTime = d3.scaleTime()
         .domain([tickToDate(xExtent[0]), tickToDate(xExtent[1])])
-        .range([30, width - 30])
+        .range([50, width - 50])
       const xScaleLinear = d3.scaleTime()
         .domain(xExtent)
-        .range([30, width - 30])
+        .range([50, width - 50])
 
       const xAxis = d3.axisBottom(xScaleTime).ticks(width / 80).tickSizeOuter(0);
       const yAxis = d3.axisLeft(yScale).ticks(height / 40);
@@ -117,7 +117,7 @@ function Chart({ dataY, dataX, useDerivative, scaleDataY, useSmooth }) {
         .attr("viewBox", [0, 0, width, height])
         .call(zoom);
       d3.select(refAxisX.current).attr("transform", `translate(0,${height - 40})`).call(xAxis);
-      d3.select(refAxisY.current).attr("transform", `translate(30, 0)`).call(yAxis);
+      d3.select(refAxisY.current).attr("transform", `translate(50, 0)`).call(yAxis);
 
       function handleZoom({ transform }) {
         refTransform.current = transform
