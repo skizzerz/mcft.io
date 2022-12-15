@@ -6,3 +6,25 @@ body {
 a {
   color: #00B7FF;
 }
+
+.collapse-content {
+  display: none
+}
+
+.collapsible>label:has(> :checked)+.collapse-content {
+  display: block
+}
+
+.section-link::before {
+  display: inline-block;
+  content: '🔗';
+  filter: grayscale(100%);
+  font-size: 1em;
+  width: 0;
+  margin-left: -1.5em;
+  margin-right: 1.5em;
+}
+
+.section-link {
+  text-decoration: none;
+}

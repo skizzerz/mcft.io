@@ -167,11 +167,14 @@ function AnyChart({ charts }) {
   const filterState = React.useState('raw');
   if (!charts) return React.createElement('div');
 
+  const keys = Object.keys(charts).sort();
+  if (chartState[0] == null) chartState[0] = keys[0]
+
   const useDerivative = filterState[0] != 'raw';
-  const scaleDataY = filterState[0] == 'per tick' ? 1.0/20 : 1;
+  const scaleDataY = filterState[0] == 'per tick' ? 1.0 / 20 : 1;
 
   return React.createElement('div', null,
-    React.createElement(ComboBox, { options: Object.keys(charts).sort(), state: chartState }),
+    React.createElement(ComboBox, { options: keys, state: chartState }),
     React.createElement(ComboBox, { options: ['raw', 'per second', 'per tick'], state: filterState }),
     'Smooth:',
     React.createElement(CheckBox, { state: smoothState }),
@@ -239,21 +242,37 @@ function jsonl_to_charts(jsonl) {
   return ret;
 }
 
+function Collapsable({ label, children }) {
+  return React.createElement('div', { class: 'collapsible' },
+    React.createElement('label', null,
+      label,
+      React.createElement('input', { type: 'checkbox' })),
+    React.createElement('div', { class: 'collapse-content' }, ...children)
+  );
+}
+
 function App() {
   const [data, status] = reloadFile("/reddisk/output.json", true);
   const [data2, status2] = reloadFile("/reddisk/charts.jsonl", false);
 
   return React.createElement('div', null, `Status: ${status}`,
-    React.createElement(AnyChart, { charts: data?.charts?.d }),
-    React.createElement(AnyChart, { charts: jsonl_to_charts(data2) }),
-    'Items:',
-    React.createElement(MapDisplay, { data: data?.memon?.items }),
-    'Crafting:',
-    React.createElement(CraftingMonitor, { crafting: data?.memon?.crafting }),
-    'Log:',
-    React.createElement(Log, { log: data?.log }),
-    'Raw Data:',
-    React.createElement('div', null, JSON.stringify(data)));
+    React.createElement('section', { id: 'charts' },
+      React.createElement('h2', null, React.createElement('a', { href: '#charts', class: 'section-link' }), 'Charts'),
+      React.createElement(AnyChart, { charts: data?.charts?.d }),
+      React.createElement(AnyChart, { charts: jsonl_to_charts(data2) })),
+    React.createElement('section', { id: 'items' },
+      React.createElement('h2', null, React.createElement('a', { href: '#items', class: 'section-link' }), 'Items'),
+      React.createElement(MapDisplay, { data: data?.memon?.items })),
+    React.createElement('section', { id: 'crafting' },
+      React.createElement('h2', null, React.createElement('a', { href: '#crafting', class: 'section-link' }), 'Crafting'),
+      React.createElement(CraftingMonitor, { crafting: data?.memon?.crafting })),
+    React.createElement('section', { id: 'log' },
+      React.createElement('h2', null, React.createElement('a', { href: '#log', class: 'section-link' }), 'Log'),
+      React.createElement(Log, { log: data?.log })),
+    React.createElement('section', { id: 'raw-data' },
+      React.createElement('h2', null, React.createElement('a', { href: '#log', class: 'section-link' }), 'Raw Data'),
+      React.createElement(Collapsable, { label: 'Visible:', children: [JSON.stringify(data)] }))
+  );
 }
 
 ReactDOM.render(
