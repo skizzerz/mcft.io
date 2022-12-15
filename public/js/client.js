@@ -15,15 +15,28 @@ function Log(props) {
   }
   return React.createElement('ul', null, ...children);
 }
+
 function MapDisplay({ data }) {
+  const [filter, setFilter] = React.useState('')
   const children = []
+  var x = 0;
+  var y = 0;
   if (typeof data == "object") {
     const keys = Object.keys(data).sort();
+    const lowerFilter = filter.toLowerCase();
     for (const v of keys) {
-      children.push(React.createElement('li', null, `${v} - ${data[v]}`));
+      if (lowerFilter.length == 0 || v.toLowerCase().indexOf(lowerFilter) != -1) {
+        children.push(React.createElement('li', null, `${v} - ${data[v]}`));
+        x++;
+      }
     }
+    y = keys.length;
   }
-  return React.createElement('ul', null, ...children);
+  return React.createElement('div', null,
+    'Filter: ',
+    React.createElement('input', { type: 'text', value: filter, onChange: (e) => setFilter(e.target.value) }),
+    `${x} of ${y} items displayed`,
+    React.createElement('ul', null, ...children));
 }
 
 function applyFIR(data, kernel) {
