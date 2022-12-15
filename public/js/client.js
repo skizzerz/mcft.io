@@ -31,7 +31,7 @@ function applyFIR(data, kernel) {
   return ret;
 }
 
-function Chart({ dataY, dataX, useDerivative, useSmooth }) {
+function Chart({ dataY, dataX, useDerivative, scaleDataY, useSmooth }) {
   const width = 700;
   const height = 350;
   const refSVG = React.useRef();
@@ -48,7 +48,7 @@ function Chart({ dataY, dataX, useDerivative, useSmooth }) {
       const D = d3.map(I, defined);
       I = I.filter(i => D[i]).sort((a, b) => +dataX[a] - +dataX[b]);
 
-      dataY = I.map(i => +dataY[i])
+      dataY = I.map(i => +dataY[i] * +scaleDataY)
       dataX = I.map(i => +dataX[i])
       I = d3.range(dataY.length)
 
@@ -111,7 +111,7 @@ function Chart({ dataY, dataX, useDerivative, useSmooth }) {
 
       if (refTransform.current) { handleZoom({ transform: refTransform.current }); }
     }
-  }, [dataY, dataX, width, height, useDerivative, useSmooth])
+  }, [dataY, dataX, width, height, useDerivative, useSmooth, scaleDataY])
 
   return React.createElement('svg', { width: '100%', height: '350px', ref: refSVG },
     React.createElement('g', { ref: refAxisX }),
@@ -156,18 +156,31 @@ function ComboBox({ options, state }) {
   }, els);
 }
 
+function CheckBox({ state }) {
+  const [checked, setChecked] = state
+  return React.createElement('input', { type: 'checkbox', checked, onChange: e => setChecked(e.target.checked) })
+}
+
 function AnyChart({ charts }) {
-  const selectChart = React.useState(null);
-  const selectFilter = React.useState('none');
+  const chartState = React.useState(null);
+  const smoothState = React.useState(false);
+  const filterState = React.useState('raw');
   if (!charts) return React.createElement('div');
 
-  const useDerivative = selectFilter[0] && { none: false, smooth: false, derivative: true, smoothDerivative: true }[selectFilter[0]];
-  const useSmooth = selectFilter[0] && { none: false, smooth: true, derivative: false, smoothDerivative: true }[selectFilter[0]];
+  const useDerivative = filterState[0] != 'raw';
+  const scaleDataY = filterState[0] == 'per tick' ? 1.0/20 : 1;
 
   return React.createElement('div', null,
-    React.createElement(ComboBox, { options: Object.keys(charts).sort(), state: selectChart }),
-    React.createElement(ComboBox, { options: ['none', 'smooth', 'derivative', 'smoothDerivative'], state: selectFilter }),
-    React.createElement(Chart, { dataY: charts[selectChart[0]], dataX: charts.tick, useDerivative, useSmooth })
+    React.createElement(ComboBox, { options: Object.keys(charts).sort(), state: chartState }),
+    React.createElement(ComboBox, { options: ['raw', 'per second', 'per tick'], state: filterState }),
+    'Smooth:',
+    React.createElement(CheckBox, { state: smoothState }),
+    React.createElement(Chart, {
+      dataY: charts[chartState[0]],
+      dataX: charts.tick,
+      useDerivative, scaleDataY,
+      useSmooth: smoothState[0],
+    })
   );
 }
 
