@@ -1,3 +1,11 @@
+const ServerStartTime = "Sep 18 2022 00:06:57 GMT-0700";
+
+function tickToDate(tick) {
+  const d = new Date("Sep 18 2022 00:06:57 GMT-0700");
+  d.setSeconds(tick + 57);
+  return d;
+}
+
 function Log(props) {
   const children = []
   if (typeof props.log == "object") {
@@ -72,15 +80,20 @@ function Chart({ dataY, dataX, useDerivative, scaleDataY, useSmooth }) {
         .domain(!useDerivative ? [0, d3.max(dataY)] : [Math.min(0, d3.min(dataY)), Math.max(0, d3.max(dataY))])
         .range([height - 40, 20])
 
-      const xScale = d3.scaleLinear()
-        .domain(d3.extent(dataX))
+      const xExtent = d3.extent(dataX);
+
+      const xScaleTime = d3.scaleTime()
+        .domain([tickToDate(xExtent[0]), tickToDate(xExtent[1])])
+        .range([30, width - 30])
+      const xScaleLinear = d3.scaleTime()
+        .domain(xExtent)
         .range([30, width - 30])
 
-      const xAxis = d3.axisBottom(xScale).ticks(width / 80).tickSizeOuter(0);
+      const xAxis = d3.axisBottom(xScaleTime).ticks(width / 80).tickSizeOuter(0);
       const yAxis = d3.axisLeft(yScale).ticks(height / 40);
       const line = d3.line()
         .curve(d3.curveLinear)
-        .x(i => xScale(dataX[i]))
+        .x(i => xScaleLinear(dataX[i]))
         .y(i => yScale(dataY[i]));
 
       let zoom = d3.zoom()
@@ -97,33 +110,30 @@ function Chart({ dataY, dataX, useDerivative, scaleDataY, useSmooth }) {
         refTransform.current = transform
         // d3.select(refG.current)
         //   .attr('transform', `translate(${transform.x}, 0) scale(${transform.k}, 1)`);
-        const newScaleX = transform.rescaleX(xScale);
-        xAxis.scale(newScaleX);
+        const newScaleX = transform.rescaleX(xScaleLinear);
+        xAxis.scale(transform.rescaleX(xScaleTime));
         d3.select(refAxisX.current).call(xAxis);
         d3.select(refPath.current)
           .attr("d", line.x(i => newScaleX(dataX[i]))(I));
       }
 
-      d3.select(refPath.current)
-        .attr("fill", "none")
-        .attr("stroke", "black")
-        .attr("d", line(I))
+      d3.select(refPath.current).attr("d", line(I))
 
       if (refTransform.current) { handleZoom({ transform: refTransform.current }); }
     }
   }, [dataY, dataX, width, height, useDerivative, useSmooth, scaleDataY])
 
-  return React.createElement('svg', { width: '100%', height: '350px', ref: refSVG },
+  return React.createElement('svg', { class: 'chart', width, height, ref: refSVG },
     React.createElement('g', { ref: refAxisX }),
     React.createElement('g', { ref: refAxisY }),
     React.createElement('g', { ref: refG },
-      React.createElement('path', { ref: refPath }))
+      React.createElement('path', { ref: refPath, fill: 'none', stroke: 'black' }))
   );
 }
 
 function CraftingMonitor({ crafting }) {
   if (!crafting) return;
-  return React.createElement('ol', {},
+  return React.createElement('ul', {},
     ...Object.keys(crafting).sort().map((k) => {
       const v = crafting[k];
       if (v.isBusy) {
@@ -176,8 +186,9 @@ function AnyChart({ charts }) {
   return React.createElement('div', null,
     React.createElement(ComboBox, { options: keys, state: chartState }),
     React.createElement(ComboBox, { options: ['raw', 'per second', 'per tick'], state: filterState }),
-    'Smooth:',
-    React.createElement(CheckBox, { state: smoothState }),
+    React.createElement('label', null,
+      'Smooth:',
+      React.createElement(CheckBox, { state: smoothState })),
     React.createElement(Chart, {
       dataY: charts[chartState[0]],
       dataX: charts.tick,
