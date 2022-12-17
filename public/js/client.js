@@ -1,7 +1,7 @@
-const ServerStartTime = "Sep 18 2022 00:06:57 GMT-0700";
+const ServerStartTime = "Sep 18 2022 00:01:57 GMT-0700";
 
 function tickToDate(tick) {
-  const d = new Date("Sep 18 2022 00:06:57 GMT-0700");
+  const d = new Date(ServerStartTime);
   d.setSeconds(tick + 57);
   return d;
 }
@@ -196,7 +196,7 @@ function AnyChart({ charts }) {
   const useDerivative = filterState[0] != 'raw';
   const scaleDataY = filterState[0] == 'per tick' ? 1.0 / 20 : 1;
 
-  return React.createElement('div', null,
+  return React.createElement('div', { class: 'anychart' },
     React.createElement(ComboBox, { options: keys, state: chartState }),
     React.createElement(ComboBox, { options: ['raw', 'per second', 'per tick'], state: filterState }),
     React.createElement('label', null,
@@ -209,6 +209,18 @@ function AnyChart({ charts }) {
       useSmooth: smoothState[0],
     })
   );
+}
+
+function AnyCharts({ charts }) {
+  const [count, setCount] = React.useState(1);
+  const children = [];
+  for (var k = 0; k < count; ++k) {
+    children.push(React.createElement(AnyChart, { charts }))
+  }
+  return React.createElement('div', null,
+    React.createElement('button', { onClick: () => setCount((x) => x + 1) }, 'Add Chart'),
+    React.createElement('button', { onClick: () => setCount((x) => Math.max(1, x - 1)) }, 'Remove Chart'),
+    React.createElement('div', { class: 'flex-container' }, ...children));
 }
 
 function reloadFile(uri, isJson) {
@@ -245,7 +257,7 @@ function reloadFile(uri, isJson) {
       if (timeout.current) clearTimeout(timeout.current);
       controller.abort();
     };
-  }, []);
+  }, [uri]);
   return [data, status]
 }
 
@@ -276,14 +288,17 @@ function Collapsable({ label, children }) {
 }
 
 function App() {
-  const [data, status] = reloadFile("/reddisk/output.json", true);
-  const [data2, status2] = reloadFile("/reddisk/charts.jsonl", false);
+  const proxyState = React.useState(false);
+  const [data, status] = reloadFile((proxyState[0] ? '/fwd' : '') + "/reddisk/output.json", true);
+  const [data2, status2] = reloadFile((proxyState[0] ? '/fwd' : '') + "/reddisk/charts.jsonl", false);
 
   return React.createElement('div', null, `Status: ${status}`,
-    React.createElement('section', { id: 'charts' },
-      React.createElement('h2', null, React.createElement('a', { href: '#charts', class: 'section-link' }), 'Charts'),
-      React.createElement(AnyChart, { charts: data?.charts?.d }),
-      React.createElement(AnyChart, { charts: jsonl_to_charts(data2) })),
+    React.createElement('section', { id: 'charts-realtime' },
+      React.createElement('h2', null, React.createElement('a', { href: '#charts-realtime', class: 'section-link' }), 'Charts (Realtime)'),
+      React.createElement(AnyCharts, { charts: data?.charts?.d })),
+    React.createElement('section', { id: 'charts-long' },
+      React.createElement('h2', null, React.createElement('a', { href: '#charts-long', class: 'section-link' }), 'Charts (Long-Term)'),
+      React.createElement(AnyCharts, { charts: jsonl_to_charts(data2) })),
     React.createElement('section', { id: 'items' },
       React.createElement('h2', null, React.createElement('a', { href: '#items', class: 'section-link' }), 'Items'),
       React.createElement(MapDisplay, { data: data?.memon?.items })),
@@ -295,7 +310,8 @@ function App() {
       React.createElement(Log, { log: data?.log })),
     React.createElement('section', { id: 'raw-data' },
       React.createElement('h2', null, React.createElement('a', { href: '#log', class: 'section-link' }), 'Raw Data'),
-      React.createElement(Collapsable, { label: 'Visible:', children: [JSON.stringify(data)] }))
+      React.createElement(Collapsable, { label: 'Visible:', children: [JSON.stringify(data)] }),
+      React.createElement(CheckBox, { state: proxyState }))
   );
 }
 
