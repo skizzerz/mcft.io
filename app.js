@@ -28,7 +28,7 @@ if (app.get('env') === 'development') {
     pathRewrite: { '^/fwd/reddisk': '/reddisk' }
   }))
 }
-app.use("/reddisk", express.static("/mnt/minecraft/62e65afb-e9d7-46f3-869b-d5324ed52d7a"))
+app.use("/reddisk", express.static("/mnt/minecraft/oc/62e65afb-e9d7-46f3-869b-d5324ed52d7a/home"))
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
