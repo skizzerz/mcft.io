@@ -29,6 +29,7 @@ if (app.get('env') === 'development') {
   }))
 }
 app.use("/reddisk", express.static("/mnt/minecraft/oc/62e65afb-e9d7-46f3-869b-d5324ed52d7a/home"))
+app.use("/ryandisk", express.static("/mnt/minecraft/oc/36f37951-cc56-4d32-9e78-b52c8db76fb7"))
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
