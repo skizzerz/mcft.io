@@ -1,0 +1,12 @@
+local ret = ''
+local cmps = require('component')
+
+local me = cmps.proxy(cmps.get("cdd1e45b"))
+
+local craftables = me.getCpus()[4]
+
+for k, v in pairs(craftables) do
+    ret = ret .. '\n' .. tostring(k) .. '=' .. tostring(v)
+end
+
+return ret
