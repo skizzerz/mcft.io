@@ -20,7 +20,7 @@ jobs:
       - name: Run deployment
         run: python .github/deploy.py
         env:
-          DEBUG: 0
+          DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
           CPANEL_ENV: production
           CPANEL_TOKEN: ${{ secrets.CPANEL_TOKEN }}
           CPANEL_API_URL: "https://mcft.io:2083"
