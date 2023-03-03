@@ -93,6 +93,7 @@ function Chart({ dataY, dataX, useDerivative, scaleDataY, useSmooth }) {
         .domain(!useDerivative ? [0, d3.max(dataY)] : [Math.min(0, d3.min(dataY)), Math.max(0, d3.max(dataY))])
         .range([height - 40, 20])
 
+      const yFormat = d3.format(".3s");
       const xExtent = d3.extent(dataX);
 
       const xScaleTime = d3.scaleTime()
@@ -103,7 +104,7 @@ function Chart({ dataY, dataX, useDerivative, scaleDataY, useSmooth }) {
         .range([50, width - 50])
 
       const xAxis = d3.axisBottom(xScaleTime).ticks(width / 80).tickSizeOuter(0);
-      const yAxis = d3.axisLeft(yScale).ticks(height / 40);
+      const yAxis = d3.axisLeft(yScale).ticks(height / 40).tickFormat(yFormat);
       const line = d3.line()
         .curve(d3.curveLinear)
         .x(i => xScaleLinear(dataX[i]))
