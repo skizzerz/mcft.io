@@ -93,7 +93,9 @@ function Chart({ dataY, dataX, useDerivative, scaleDataY, useSmooth }) {
         .domain(!useDerivative ? [0, d3.max(dataY)] : [Math.min(0, d3.min(dataY)), Math.max(0, d3.max(dataY))])
         .range([height - 40, 20])
 
-      const yFormat = d3.format(".3s");
+      // This uses SI prefixes, so we change "giga" to "billions" (thousands, millions, and trillions are
+      // good with k, M, and T, respectively)
+      const yFormat = y => d3.format(".3s")(y).replace("G", "B");
       const xExtent = d3.extent(dataX);
 
       const xScaleTime = d3.scaleTime()
