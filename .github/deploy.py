@@ -9,7 +9,7 @@ import requests
 
 # this script is executed in a github actions container
 
-DEBUG_MODE = int(os.environ["DEBUG"])
+DEBUG_MODE = os.environ["DEBUG"].lower() == "true"
 CLEANUP = []
 
 def run():
