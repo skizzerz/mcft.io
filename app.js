@@ -29,7 +29,8 @@ if (app.get('env') === 'development') {
   }))
 }
 app.use("/reddisk", express.static("/mnt/minecraft/oc/62e65afb-e9d7-46f3-869b-d5324ed52d7a/home"))
-app.use("/ryandisk", express.static("/mnt/minecraft/oc/36f37951-cc56-4d32-9e78-b52c8db76fb7"))
+app.use("/ryandisk", express.static("/mnt/minecraft/oc/29a6e1dc-ac9a-4af0-a3fe-76e48cb36d6e"))
+app.use("/ryanlog", express.static("/mnt/minecraft/oc/82d19e6a-70af-4f0c-a0bd-504a1e3f028f"))
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
