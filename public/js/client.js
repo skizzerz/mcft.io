@@ -150,11 +150,13 @@ function Chart({ dataY, dataX, useDerivative, scaleDataY, useSmooth }) {
 function CraftingMonitor({ crafting }) {
   if (!crafting) return;
   return React.createElement('ul', {},
-    ...Object.keys(crafting).sort().map((k) => {
+    ...Object.keys(crafting).sort((a, b) =>
+      `${crafting[a].name}#${a}`.localeCompare(`${crafting[b].name}#${b}`, undefined, { numeric: true })
+    ).map((k) => {
       const v = crafting[k];
       if (v.isBusy) {
         const making = v.finalOutput ? `${v.finalOutput.size}x ${v.finalOutput.label}` : 'unknown';
-        return React.createElement('li', {}, `#${k} ${v.name} making ${making}`,
+        return React.createElement('li', {}, `${v.name}#${k} making ${making}`,
           React.createElement('ul', {}, ...Object.keys(v.activeItems).map((k) => {
             const w = v.activeItems[k];
             return React.createElement('li', {}, `Active: ${w.size}x ${w.label}`);
@@ -167,7 +169,7 @@ function CraftingMonitor({ crafting }) {
           }))
         )
       } else {
-        return React.createElement('li', {}, `#${k} ${v.name} Inactive`)
+        return React.createElement('li', {}, `${v.name}#${k} Inactive`)
       }
     })
   )
