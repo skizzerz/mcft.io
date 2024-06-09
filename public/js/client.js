@@ -154,7 +154,7 @@ function CraftingMonitor({ crafting }) {
       const v = crafting[k];
       if (v.isBusy) {
         const making = v.finalOutput ? `${v.finalOutput.size}x ${v.finalOutput.label}` : 'unknown';
-        return React.createElement('li', {}, `#${k} making ${making}`,
+        return React.createElement('li', {}, `#${k} ${v.name} making ${making}`,
           React.createElement('ul', {}, ...Object.keys(v.activeItems).map((k) => {
             const w = v.activeItems[k];
             return React.createElement('li', {}, `Active: ${w.size}x ${w.label}`);
@@ -167,7 +167,7 @@ function CraftingMonitor({ crafting }) {
           }))
         )
       } else {
-        return React.createElement('li', {}, `#${k} Inactive`)
+        return React.createElement('li', {}, `#${k} ${v.name} Inactive`)
       }
     })
   )
