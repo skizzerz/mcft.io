@@ -315,7 +315,7 @@ function App() {
       React.createElement(Log, { log: data?.log })),
     React.createElement('section', { id: 'raw-data' },
       React.createElement('h2', null, React.createElement('a', { href: '#log', class: 'section-link' }), 'Raw Data'),
-      React.createElement(Collapsable, { label: 'Visible:', children: [JSON.stringify(data)] }),
+      React.createElement(Collapsable, { label: 'Visible:', children: [JSON.stringify(data)], class: 'small' }),
       React.createElement(CheckBox, { state: proxyState }))
   );
 }
