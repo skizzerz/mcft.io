@@ -100,10 +100,10 @@ function Chart({ dataY, dataX, useDerivative, scaleDataY, useSmooth }) {
 
       const xScaleTime = d3.scaleTime()
         .domain([tickToDate(xExtent[0]), tickToDate(xExtent[1])])
-        .range([50, width - 50])
+        .range([50, width - 20])
       const xScaleLinear = d3.scaleTime()
         .domain(xExtent)
-        .range([50, width - 50])
+        .range([50, width - 20])
 
       const xAxis = d3.axisBottom(xScaleTime).ticks(width / 80).tickSizeOuter(0);
       const yAxis = d3.axisLeft(yScale).ticks(height / 40).tickFormat(yFormat);
@@ -139,7 +139,7 @@ function Chart({ dataY, dataX, useDerivative, scaleDataY, useSmooth }) {
     }
   }, [dataY, dataX, width, height, useDerivative, useSmooth, scaleDataY])
 
-  return React.createElement('svg', { class: 'chart', width, height, ref: refSVG },
+  return React.createElement('svg', { class: 'chart', ref: refSVG },
     React.createElement('g', { ref: refAxisX }),
     React.createElement('g', { ref: refAxisY }),
     React.createElement('g', { ref: refG },
@@ -201,7 +201,7 @@ function AnyChart({ charts }) {
   const useDerivative = filterState[0] != 'raw';
   const scaleDataY = filterState[0] == 'per tick' ? 1.0 / 20 : 1;
 
-  return React.createElement('div', { class: 'anychart' },
+  return React.createElement('div', { class: 'anychart col-12 col-xxl-6' },
     React.createElement(ComboBox, { options: keys, state: chartState }),
     React.createElement(ComboBox, { options: ['raw', 'per second', 'per tick'], state: filterState }),
     React.createElement('label', null,
@@ -225,7 +225,7 @@ function AnyCharts({ charts }) {
   return React.createElement('div', null,
     React.createElement('button', { onClick: () => setCount((x) => x + 1) }, 'Add Chart'),
     React.createElement('button', { onClick: () => setCount((x) => Math.max(1, x - 1)) }, 'Remove Chart'),
-    React.createElement('div', { class: 'flex-container' }, ...children));
+    React.createElement('div', { class: 'd-flex flex-row row' }, ...children));
 }
 
 function reloadFile(uri, isJson) {
@@ -292,26 +292,91 @@ function Collapsable({ label, children }) {
   );
 }
 
-function NavItem({ href, text, current }) {
+function NavItem({ href, text, icon, current }) {
   if (current == href) {
     return React.createElement('li', { class: 'nav-item' },
       React.createElement('a', { href, class: 'nav-link active' },
         React.createElement('svg', { class: 'bi pe-none me-2', width: 16, height: 16 },
-          React.createElement('use', { href: '#speedometer2' })
+          React.createElement('use', { href: icon })
         ),
         ` ${text}`
       )
     );
   } else {
-    return React.createElement('li', { class: 'nav-item' },
+    return React.createElement('li', {},
       React.createElement('a', { href, class: 'nav-link link-body-emphasis' },
         React.createElement('svg', { class: 'bi pe-none me-2', width: 16, height: 16 },
-          React.createElement('use', { href: '#speedometer2' })
+          React.createElement('use', { href: icon })
         ),
         ` ${text}`
       )
     );
   }
+}
+
+function SmallNavItem({ href, icon, current }) {
+  if (current == href) {
+    return React.createElement('li', { class: 'nav-item' },
+      React.createElement('a', { href, class: 'nav-link active py-3 border-bottom rounded-0' },
+        React.createElement('svg', { class: 'bi pe-none', width: 16, height: 16 },
+          React.createElement('use', { href: icon })
+        )
+      )
+    );
+  } else {
+    return React.createElement('li', {},
+      React.createElement('a', { href, class: 'nav-link py-3 border-bottom rounded-0 link-body-emphasis' },
+        React.createElement('svg', { class: 'bi pe-none', width: 16, height: 16 },
+          React.createElement('use', { href: icon })
+        )
+      )
+    );
+  }
+}
+
+function NavList({ }) {
+  const [scrollPosition, setScrollPosition] = React.useState(0);
+
+  React.useEffect(() => {
+    const f = event => { setScrollPosition(window.scrollY); };
+    window.addEventListener('scroll', f);
+    return () => {
+      window.removeEventListener('scroll', f);
+    };
+  }, []);
+
+  let current = '';
+  if (document.getElementById('raw-data')?.offsetTop - 10 <= scrollPosition) {
+    current = '#raw-data';
+  } else if (document.getElementById('log')?.offsetTop - 10 <= scrollPosition) {
+    current = '#log';
+  } else if (document.getElementById('crafting')?.offsetTop - 10 <= scrollPosition) {
+    current = '#crafting';
+  } else if (document.getElementById('items')?.offsetTop - 10 <= scrollPosition) {
+    current = '#items';
+  } else if (document.getElementById('charts-long')?.offsetTop - 10 <= scrollPosition) {
+    current = '#charts-long';
+  } else {
+    current = '#charts-realtime';
+  }
+
+  return React.createElement(React.Fragment, null,
+    React.createElement('ul', { class: 'nav nav-pills flex-column mb-auto d-none d-md-flex' },
+      React.createElement(NavItem, { href: '#charts-realtime', text: 'Charts (Realtime)', icon: '#speedometer2', current }),
+      React.createElement(NavItem, { href: '#charts-long', text: 'Charts (Long-Term)', icon: '#speedometer2', current }),
+      React.createElement(NavItem, { href: '#items', text: 'Items', icon: '#grid', current }),
+      React.createElement(NavItem, { href: '#crafting', text: 'Crafting', icon: '#table', current }),
+      React.createElement(NavItem, { href: '#log', text: 'Logs', icon: '#table', current }),
+      React.createElement(NavItem, { href: '#raw-data', text: 'Raw Data', icon: '#table', current })
+    ),
+    React.createElement('ul', { class: 'nav nav-pills nav-flush flex-column mb-auto d-md-none d-flex text-center' },
+      React.createElement(SmallNavItem, { href: '#charts-realtime', icon: '#speedometer2', current }),
+      React.createElement(SmallNavItem, { href: '#charts-long', icon: '#speedometer2', current }),
+      React.createElement(SmallNavItem, { href: '#items', icon: '#grid', current }),
+      React.createElement(SmallNavItem, { href: '#crafting', icon: '#table', current }),
+      React.createElement(SmallNavItem, { href: '#log', icon: '#table', current }),
+      React.createElement(SmallNavItem, { href: '#raw-data', icon: '#table', current })
+    ));
 }
 
 function Sidebar({ state }) {
@@ -326,33 +391,30 @@ function Sidebar({ state }) {
   }, []);
 
   let current = '';
-  if (document.getElementById('raw-data')?.offsetTop < scrollPosition) {
+  if (document.getElementById('raw-data')?.offsetTop <= scrollPosition) {
     current = '#raw-data';
-  } else if (document.getElementById('log')?.offsetTop < scrollPosition) {
+  } else if (document.getElementById('log')?.offsetTop <= scrollPosition) {
     current = '#log';
-  } else if (document.getElementById('crafting')?.offsetTop < scrollPosition) {
+  } else if (document.getElementById('crafting')?.offsetTop <= scrollPosition) {
     current = '#crafting';
-  } else if (document.getElementById('items')?.offsetTop < scrollPosition) {
+  } else if (document.getElementById('items')?.offsetTop <= scrollPosition) {
     current = '#items';
-  } else if (document.getElementById('charts-long')?.offsetTop < scrollPosition) {
+  } else if (document.getElementById('charts-long')?.offsetTop <= scrollPosition) {
     current = '#charts-long';
   } else {
     current = '#charts-realtime';
   }
 
-  return React.createElement('div', { class: 'sidebar d-flex flex-column border border-right col-md-4 col-lg-3 p-3 bg-body-tertiary' },
-    React.createElement('div', { class: 'd-flex align-items-center mb-3 mb-md-0' },
-      React.createElement('span', { class: 'fs-4' }, 'GTNH: Skizzerz Edition')
+  return React.createElement('div', {
+    class: 'sidebar d-flex flex-shrink-0 flex-column border border-right col-2 col-md-4 col-lg-3 p-3 bg-body-tertiary',
+    style: {}
+  },
+    React.createElement('div', { class: 'd-flex align-items-center mb-md-0' },
+      React.createElement('span', { class: 'd-none d-md-inline fs-5' }, 'GTNH: Skizzerz Edition'),
+      React.createElement('span', { class: 'd-md-none mx-auto fs-5' }, 'GTNH')
     ),
     React.createElement('hr'),
-    React.createElement('ul', { class: 'nav nav-pills flex-column mb-auto' },
-      React.createElement(NavItem, { href: '#charts-realtime', text: 'Charts (Realtime)', current }),
-      React.createElement(NavItem, { href: '#charts-long', text: 'Charts (Long-Term)', current }),
-      React.createElement(NavItem, { href: '#items', text: 'Items', current }),
-      React.createElement(NavItem, { href: '#crafting', text: 'Crafting', current }),
-      React.createElement(NavItem, { href: '#log', text: 'Logs', current }),
-      React.createElement(NavItem, { href: '#raw-data', text: 'Raw Data', current })
-    ),
+    React.createElement(NavList),
     React.createElement('hr'),
     React.createElement('div', {}, `Status: ${state}`)
   );
@@ -365,9 +427,9 @@ function App() {
 
   return React.createElement('div', { class: 'row' },
     React.createElement(Sidebar, { state: status }),
-    React.createElement('main', { class: 'col-md-8 ms-sm-auto col-lg-9 px-md-4' },
+    React.createElement('main', { class: 'col-10 col-md-8 col-lg-9 px-md-4' },
       React.createElement('div', { class: 'b-example-divider b-example-vr' }),
-      React.createElement('div', { class: 'px-4' },
+      React.createElement('div', {},
         React.createElement('section', { id: 'charts-realtime' },
           React.createElement('h2', null, React.createElement('a', { href: '#charts-realtime', class: 'section-link' }), 'Charts (Realtime)'),
           React.createElement(AnyCharts, { charts: data?.charts?.d })),
