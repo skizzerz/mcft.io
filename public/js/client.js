@@ -292,32 +292,102 @@ function Collapsable({ label, children }) {
   );
 }
 
+function NavItem({ href, text, current }) {
+  if (current == href) {
+    return React.createElement('li', { class: 'nav-item' },
+      React.createElement('a', { href, class: 'nav-link active' },
+        React.createElement('svg', { class: 'bi pe-none me-2', width: 16, height: 16 },
+          React.createElement('use', { href: '#speedometer2' })
+        ),
+        ` ${text}`
+      )
+    );
+  } else {
+    return React.createElement('li', { class: 'nav-item' },
+      React.createElement('a', { href, class: 'nav-link link-body-emphasis' },
+        React.createElement('svg', { class: 'bi pe-none me-2', width: 16, height: 16 },
+          React.createElement('use', { href: '#speedometer2' })
+        ),
+        ` ${text}`
+      )
+    );
+  }
+}
+
+function Sidebar({ state }) {
+  const [scrollPosition, setScrollPosition] = React.useState(0);
+
+  React.useEffect(() => {
+    const f = event => { setScrollPosition(window.scrollY); };
+    window.addEventListener('scroll', f);
+    return () => {
+      window.removeEventListener('scroll', f);
+    };
+  }, []);
+
+  let current = '';
+  if (document.getElementById('raw-data')?.offsetTop < scrollPosition) {
+    current = '#raw-data';
+  } else if (document.getElementById('log')?.offsetTop < scrollPosition) {
+    current = '#log';
+  } else if (document.getElementById('crafting')?.offsetTop < scrollPosition) {
+    current = '#crafting';
+  } else if (document.getElementById('items')?.offsetTop < scrollPosition) {
+    current = '#items';
+  } else if (document.getElementById('charts-long')?.offsetTop < scrollPosition) {
+    current = '#charts-long';
+  } else {
+    current = '#charts-realtime';
+  }
+
+  return React.createElement('div', { class: 'sidebar d-flex flex-column border border-right col-md-4 col-lg-3 p-3 bg-body-tertiary' },
+    React.createElement('div', { class: 'd-flex align-items-center mb-3 mb-md-0' },
+      React.createElement('span', { class: 'fs-4' }, 'GTNH: Skizzerz Edition')
+    ),
+    React.createElement('hr'),
+    React.createElement('ul', { class: 'nav nav-pills flex-column mb-auto' },
+      React.createElement(NavItem, { href: '#charts-realtime', text: 'Charts (Realtime)', current }),
+      React.createElement(NavItem, { href: '#charts-long', text: 'Charts (Long-Term)', current }),
+      React.createElement(NavItem, { href: '#items', text: 'Items', current }),
+      React.createElement(NavItem, { href: '#crafting', text: 'Crafting', current }),
+      React.createElement(NavItem, { href: '#log', text: 'Logs', current }),
+      React.createElement(NavItem, { href: '#raw-data', text: 'Raw Data', current })
+    ),
+    React.createElement('hr'),
+    React.createElement('div', {}, `Status: ${state}`)
+  );
+}
+
 function App() {
   const proxyState = React.useState(false);
   const [data, status] = reloadFile((proxyState[0] ? '/fwd' : '') + "/reddisk/output.json", true);
   const [data2, status2] = reloadFile((proxyState[0] ? '/fwd' : '') + "/reddisk/charts.jsonl", false);
 
-  return React.createElement('div', null, `Status: ${status}`,
-    React.createElement('section', { id: 'charts-realtime' },
-      React.createElement('h2', null, React.createElement('a', { href: '#charts-realtime', class: 'section-link' }), 'Charts (Realtime)'),
-      React.createElement(AnyCharts, { charts: data?.charts?.d })),
-    React.createElement('section', { id: 'charts-long' },
-      React.createElement('h2', null, React.createElement('a', { href: '#charts-long', class: 'section-link' }), 'Charts (Long-Term)'),
-      React.createElement(AnyCharts, { charts: jsonl_to_charts(data2) })),
-    React.createElement('section', { id: 'items' },
-      React.createElement('h2', null, React.createElement('a', { href: '#items', class: 'section-link' }), 'Items'),
-      React.createElement(MapDisplay, { data: data?.memon?.items })),
-    React.createElement('section', { id: 'crafting' },
-      React.createElement('h2', null, React.createElement('a', { href: '#crafting', class: 'section-link' }), 'Crafting'),
-      React.createElement(CraftingMonitor, { crafting: data?.memon?.crafting })),
-    React.createElement('section', { id: 'log' },
-      React.createElement('h2', null, React.createElement('a', { href: '#log', class: 'section-link' }), 'Log'),
-      React.createElement(Log, { log: data?.log })),
-    React.createElement('section', { id: 'raw-data' },
-      React.createElement('h2', null, React.createElement('a', { href: '#log', class: 'section-link' }), 'Raw Data'),
-      React.createElement(Collapsable, { label: 'Visible:', children: [JSON.stringify(data)], class: 'small' }),
-      React.createElement(CheckBox, { state: proxyState }))
-  );
+  return React.createElement('div', { class: 'row' },
+    React.createElement(Sidebar, { state: status }),
+    React.createElement('main', { class: 'col-md-8 ms-sm-auto col-lg-9 px-md-4' },
+      React.createElement('div', { class: 'b-example-divider b-example-vr' }),
+      React.createElement('div', { class: 'px-4' },
+        React.createElement('section', { id: 'charts-realtime' },
+          React.createElement('h2', null, React.createElement('a', { href: '#charts-realtime', class: 'section-link' }), 'Charts (Realtime)'),
+          React.createElement(AnyCharts, { charts: data?.charts?.d })),
+        React.createElement('section', { id: 'charts-long' },
+          React.createElement('h2', null, React.createElement('a', { href: '#charts-long', class: 'section-link' }), 'Charts (Long-Term)'),
+          React.createElement(AnyCharts, { charts: jsonl_to_charts(data2) })),
+        React.createElement('section', { id: 'items' },
+          React.createElement('h2', null, React.createElement('a', { href: '#items', class: 'section-link' }), 'Items'),
+          React.createElement(MapDisplay, { data: data?.memon?.items })),
+        React.createElement('section', { id: 'crafting' },
+          React.createElement('h2', null, React.createElement('a', { href: '#crafting', class: 'section-link' }), 'Crafting'),
+          React.createElement(CraftingMonitor, { crafting: data?.memon?.crafting })),
+        React.createElement('section', { id: 'log' },
+          React.createElement('h2', null, React.createElement('a', { href: '#log', class: 'section-link' }), 'Log'),
+          React.createElement(Log, { log: data?.log })),
+        React.createElement('section', { id: 'raw-data' },
+          React.createElement('h2', null, React.createElement('a', { href: '#log', class: 'section-link' }), 'Raw Data'),
+          React.createElement(Collapsable, { label: 'Visible:', children: [JSON.stringify(data)], class: 'col' }),
+          React.createElement(CheckBox, { state: proxyState }))
+      )));
 }
 
 ReactDOM.render(
