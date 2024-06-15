@@ -406,7 +406,7 @@ function Sidebar({ state }) {
   }
 
   return React.createElement('div', {
-    class: 'sidebar d-flex flex-shrink-0 flex-column border border-right col-2 col-md-4 col-lg-3 p-3 bg-body-tertiary',
+    class: 'sidebar d-flex flex-shrink-0 flex-column border border-right col-2 col-md-4 col-lg-3 col-xxl-2 px-md-3 pt-3 bg-body-tertiary',
     style: {}
   },
     React.createElement('div', { class: 'd-flex align-items-center mb-md-0' },
