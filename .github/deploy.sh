@@ -35,9 +35,9 @@ cp -r . $DESTPATH
 ##########
 # ensure dependencies are up to date
 ##########
-echo "Ensuring updated dependencies"
+echo "Installing dependencies"
 cd $DESTPATH
-npm install
+npm ci --omit dev
 
 ##########
 # cleanup unnecessary files

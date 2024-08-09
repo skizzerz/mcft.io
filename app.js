@@ -1,10 +1,8 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var lessMiddleware = require('less-middleware');
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
 const { createProxyMiddleware } = require('http-proxy-middleware');
-var logger = require('morgan');
+const logger = require('morgan');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -19,7 +17,6 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(lessMiddleware(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'public')));
 if (app.get('env') === 'development') {
   app.use("/fwd/reddisk", createProxyMiddleware({
@@ -27,27 +24,34 @@ if (app.get('env') === 'development') {
     changeOrigin: true,
     pathRewrite: { '^/fwd/reddisk': '/reddisk' }
   }))
+  app.use("/erl", createProxyMiddleware({
+    target: 'http://mcft.io',
+    changeOrigin: true
+  }))
+} else {
+  app.use("/erl", express.static("/mnt/minecraft/oc/0c11ce4a-8e80-41a8-9a0f-72a9dad4bf47/webroot"))
 }
 app.use("/reddisk", express.static("/mnt/minecraft/oc/b9203fd5-03cf-469b-96e0-165f7f0e6b5b"))
+app.use("/oreproc", express.static("/mnt/minecraft/oc/c65ea0a6-b487-4ba9-b06a-3bc0ce0647f6"))
 app.use("/ryandisk", express.static("/mnt/minecraft/oc/29a6e1dc-ac9a-4af0-a3fe-76e48cb36d6e"))
 app.use("/ryanlog", express.static("/mnt/minecraft/oc/82d19e6a-70af-4f0c-a0bd-504a1e3f028f"))
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
-  next(createError(404));
+let latestText = ""
+app.post('/request', function (req, res) {
+  if (req.body.text) {
+    latestText = req.body.text;
+    res.status(200).send('Text received');
+  } else {
+    res.status(400).send('No text provided');
+  }
+})
+app.get('/latest', (req, res) => {
+  res.status(200).send({ text: latestText });
 });
 
-// error handler
-app.use(function (err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+app.use(function (req, res) {
+  res.status(404).send();
 });
 
 module.exports = app;

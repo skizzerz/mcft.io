@@ -52,9 +52,19 @@ function applyFIR(data, kernel) {
   return ret;
 }
 
+/**
+ * @typedef {object} ChartProps
+ * @property {number[]} dataY
+ * @property {number[]} dataX
+ * @property {boolean} useDerivative
+ * @property {number} scaleDataY
+ * @property {boolean} useSmooth
+ * @param {ChartProps} anon
+ */
 function Chart({ dataY, dataX, useDerivative, scaleDataY, useSmooth }) {
   const width = 700;
   const height = 350;
+  /** @type {React.MutableRefObject<HTMLElement|undefined>} */
   const refSVG = React.useRef();
   const refG = React.useRef();
   const refAxisX = React.useRef();
@@ -89,8 +99,12 @@ function Chart({ dataY, dataX, useDerivative, scaleDataY, useSmooth }) {
       }
       I = I.filter(i => !isNaN(dataY[i]) && !isNaN(dataX[i]))
 
+      // @ts-ignore
+      const yExtent = !useDerivative ? [0, d3.max(dataY)] : [Math.min(0, d3.min(dataY)), Math.max(0, d3.max(dataY))]
+
       const yScale = d3.scaleLinear()
-        .domain(!useDerivative ? [0, d3.max(dataY)] : [Math.min(0, d3.min(dataY)), Math.max(0, d3.max(dataY))])
+        // @ts-ignore
+        .domain(yExtent)
         .range([height - 40, 20])
 
       // This uses SI prefixes, so we change "giga" to "billions" (thousands, millions, and trillions are
@@ -102,6 +116,7 @@ function Chart({ dataY, dataX, useDerivative, scaleDataY, useSmooth }) {
         .domain([tickToDate(xExtent[0]), tickToDate(xExtent[1])])
         .range([50, width - 20])
       const xScaleLinear = d3.scaleTime()
+        // @ts-ignore
         .domain(xExtent)
         .range([50, width - 20])
 
@@ -109,18 +124,22 @@ function Chart({ dataY, dataX, useDerivative, scaleDataY, useSmooth }) {
       const yAxis = d3.axisLeft(yScale).ticks(height / 40).tickFormat(yFormat);
       const line = d3.line()
         .curve(d3.curveLinear)
+        // @ts-ignore
         .x(i => xScaleLinear(dataX[i]))
+        // @ts-ignore
         .y(i => yScale(dataY[i]));
 
+      /** @type {d3.ZoomBehavior<HTMLElement>} */
+      // @ts-ignore
       let zoom = d3.zoom()
         .on('zoom', handleZoom)
         .scaleExtent([1, 20])
         .translateExtent([[0, 0], [width, height]]);
-      d3.select(refSVG.current)
+      if (refSVG.current) d3.select(refSVG.current)
         .attr("viewBox", [0, 0, width, height])
         .call(zoom);
-      d3.select(refAxisX.current).attr("transform", `translate(0,${height - 40})`).call(xAxis);
-      d3.select(refAxisY.current).attr("transform", `translate(50, 0)`).call(yAxis);
+      if (refAxisX.current) d3.select(refAxisX.current).attr("transform", `translate(0,${height - 40})`).call(xAxis);
+      if (refAxisY.current) d3.select(refAxisY.current).attr("transform", `translate(50, 0)`).call(yAxis);
 
       function handleZoom({ transform }) {
         refTransform.current = transform
@@ -128,18 +147,18 @@ function Chart({ dataY, dataX, useDerivative, scaleDataY, useSmooth }) {
         //   .attr('transform', `translate(${transform.x}, 0) scale(${transform.k}, 1)`);
         const newScaleX = transform.rescaleX(xScaleLinear);
         xAxis.scale(transform.rescaleX(xScaleTime));
-        d3.select(refAxisX.current).call(xAxis);
-        d3.select(refPath.current)
+        if (refAxisX.current) d3.select(refAxisX.current).call(xAxis);
+        if (refPath.current) d3.select(refPath.current)
           .attr("d", line.x(i => newScaleX(dataX[i]))(I));
       }
 
-      d3.select(refPath.current).attr("d", line(I))
+      if (refPath.current) d3.select(refPath.current).attr("d", line(I))
 
       if (refTransform.current) { handleZoom({ transform: refTransform.current }); }
     }
   }, [dataY, dataX, width, height, useDerivative, useSmooth, scaleDataY])
 
-  return React.createElement('svg', { class: 'chart', ref: refSVG },
+  return React.createElement('svg', { className: 'chart', ref: refSVG },
     React.createElement('g', { ref: refAxisX }),
     React.createElement('g', { ref: refAxisY }),
     React.createElement('g', { ref: refG },
@@ -177,8 +196,9 @@ function CraftingMonitor({ crafting }) {
 
 function ComboBox({ options, state }) {
   const [selected, setSelected] = state;
-  const els = options.map((n) => React.createElement('option', { value: n }, n));
+  const els = options.map((n) => React.createElement('option', { key: n, value: n }, n));
   return React.createElement('select', {
+    // @ts-ignore
     onChange: (x) => { setSelected(x.target.value); },
     value: selected
   }, els);
@@ -186,22 +206,23 @@ function ComboBox({ options, state }) {
 
 function CheckBox({ state }) {
   const [checked, setChecked] = state
+  // @ts-ignore
   return React.createElement('input', { type: 'checkbox', checked, onChange: e => setChecked(e.target.checked) })
 }
 
 function AnyChart({ charts }) {
-  const chartState = React.useState(null);
+  const chartState = React.useState("");
   const smoothState = React.useState(false);
   const filterState = React.useState('raw');
   if (!charts) return React.createElement('div');
 
   const keys = Object.keys(charts).sort();
-  if (chartState[0] == null) chartState[0] = keys[0]
+  if (chartState[0] == "") chartState[0] = keys[0]
 
   const useDerivative = filterState[0] != 'raw';
   const scaleDataY = filterState[0] == 'per tick' ? 1.0 / 20 : 1;
 
-  return React.createElement('div', { class: 'anychart col-12 col-xxl-6' },
+  return React.createElement('div', { className: 'anychart col-12 col-xxl-6' },
     React.createElement(ComboBox, { options: keys, state: chartState }),
     React.createElement(ComboBox, { options: ['raw', 'per second', 'per tick'], state: filterState }),
     React.createElement('label', null,
@@ -225,44 +246,42 @@ function AnyCharts({ charts }) {
   return React.createElement('div', null,
     React.createElement('button', { onClick: () => setCount((x) => x + 1) }, 'Add Chart'),
     React.createElement('button', { onClick: () => setCount((x) => Math.max(1, x - 1)) }, 'Remove Chart'),
-    React.createElement('div', { class: 'd-flex flex-row row' }, ...children));
+    React.createElement('div', { className: 'd-flex flex-row row' }, ...children));
 }
 
 function reloadFile(uri, isJson) {
-  const [data, setData] = React.useState(null);
+  const [data, setData] = React.useState(isJson ? null : "");
   const [status, setStatus] = React.useState("init");
-  const timeout = React.useRef(true);
 
-  const updateData = async (controller) => {
-    const signal = controller.signal;
-    setStatus("fetching");
-    const res = await fetch(uri, { signal });
-    try {
-      if (res.status != 200) {
-        setStatus(res.status);
-      } else {
-        if (isJson) {
-          setData(await res.json());
-        } else {
-          setData(await res.text());
-        }
-        setStatus("loaded");
-      }
-    } catch (e) {
-      setStatus(`${e}`)
-    }
-    if (timeout.current) {
-      timeout.current = setTimeout(() => updateData(controller), 5000)
-    }
-  };
   React.useEffect(() => {
     const controller = new AbortController();
-    updateData(controller);
-    return () => {
-      if (timeout.current) clearTimeout(timeout.current);
-      controller.abort();
+    const updateData = async () => {
+      const signal = controller.signal;
+      setStatus("fetching");
+      const res = await fetch(uri, { signal });
+      try {
+        if (res.status != 200) {
+          setStatus("" + res.status);
+        } else {
+          if (isJson) {
+            setData(await res.json());
+          } else {
+            setData(await res.text());
+          }
+          setStatus("loaded");
+        }
+      } catch (e) {
+        setStatus(`${e}`)
+      }
+      if (!signal.aborted)
+        timeout = setTimeout(updateData, 5000)
     };
-  }, [uri]);
+    let timeout = setTimeout(updateData, 0)
+    return () => {
+      controller.abort();
+      clearTimeout(timeout);
+    };
+  }, [uri, isJson]);
   return [data, status]
 }
 
@@ -284,19 +303,19 @@ function jsonl_to_charts(jsonl) {
 }
 
 function Collapsable({ label, children }) {
-  return React.createElement('div', { class: 'collapsible' },
+  return React.createElement('div', { className: 'collapsible col' },
     React.createElement('label', null,
       label,
       React.createElement('input', { type: 'checkbox' })),
-    React.createElement('div', { class: 'collapse-content' }, ...children)
+    React.createElement('div', { className: 'collapse-content' }, ...children)
   );
 }
 
 function NavItem({ href, text, icon, current }) {
   if (current == href) {
-    return React.createElement('li', { class: 'nav-item' },
-      React.createElement('a', { href, class: 'nav-link active' },
-        React.createElement('svg', { class: 'bi pe-none me-2', width: 16, height: 16 },
+    return React.createElement('li', { className: 'nav-item' },
+      React.createElement('a', { href, className: 'nav-link active' },
+        React.createElement('svg', { className: 'bi pe-none me-2', width: 16, height: 16 },
           React.createElement('use', { href: icon })
         ),
         ` ${text}`
@@ -304,8 +323,8 @@ function NavItem({ href, text, icon, current }) {
     );
   } else {
     return React.createElement('li', {},
-      React.createElement('a', { href, class: 'nav-link link-body-emphasis' },
-        React.createElement('svg', { class: 'bi pe-none me-2', width: 16, height: 16 },
+      React.createElement('a', { href, className: 'nav-link link-body-emphasis' },
+        React.createElement('svg', { className: 'bi pe-none me-2', width: 16, height: 16 },
           React.createElement('use', { href: icon })
         ),
         ` ${text}`
@@ -316,17 +335,17 @@ function NavItem({ href, text, icon, current }) {
 
 function SmallNavItem({ href, icon, current }) {
   if (current == href) {
-    return React.createElement('li', { class: 'nav-item' },
-      React.createElement('a', { href, class: 'nav-link active py-3 border-bottom rounded-0' },
-        React.createElement('svg', { class: 'bi pe-none', width: 16, height: 16 },
+    return React.createElement('li', { className: 'nav-item' },
+      React.createElement('a', { href, className: 'nav-link active py-3 border-bottom rounded-0' },
+        React.createElement('svg', { className: 'bi pe-none', width: 16, height: 16 },
           React.createElement('use', { href: icon })
         )
       )
     );
   } else {
     return React.createElement('li', {},
-      React.createElement('a', { href, class: 'nav-link py-3 border-bottom rounded-0 link-body-emphasis' },
-        React.createElement('svg', { class: 'bi pe-none', width: 16, height: 16 },
+      React.createElement('a', { href, className: 'nav-link py-3 border-bottom rounded-0 link-body-emphasis' },
+        React.createElement('svg', { className: 'bi pe-none', width: 16, height: 16 },
           React.createElement('use', { href: icon })
         )
       )
@@ -334,11 +353,11 @@ function SmallNavItem({ href, icon, current }) {
   }
 }
 
-function NavList({ }) {
+function NavList() {
   const [scrollPosition, setScrollPosition] = React.useState(0);
 
   React.useEffect(() => {
-    const f = event => { setScrollPosition(window.scrollY); };
+    const f = () => { setScrollPosition(window.scrollY); };
     window.addEventListener('scroll', f);
     return () => {
       window.removeEventListener('scroll', f);
@@ -346,14 +365,19 @@ function NavList({ }) {
   }, []);
 
   let current = '';
+  // @ts-ignore
   if (document.getElementById('raw-data')?.offsetTop - 10 <= scrollPosition) {
     current = '#raw-data';
+    // @ts-ignore
   } else if (document.getElementById('log')?.offsetTop - 10 <= scrollPosition) {
     current = '#log';
+    // @ts-ignore
   } else if (document.getElementById('crafting')?.offsetTop - 10 <= scrollPosition) {
     current = '#crafting';
+    // @ts-ignore
   } else if (document.getElementById('items')?.offsetTop - 10 <= scrollPosition) {
     current = '#items';
+    // @ts-ignore
   } else if (document.getElementById('charts-long')?.offsetTop - 10 <= scrollPosition) {
     current = '#charts-long';
   } else {
@@ -361,7 +385,7 @@ function NavList({ }) {
   }
 
   return React.createElement(React.Fragment, null,
-    React.createElement('ul', { class: 'nav nav-pills flex-column mb-auto d-none d-md-flex' },
+    React.createElement('ul', { className: 'nav nav-pills flex-column mb-auto d-none d-md-flex' },
       React.createElement(NavItem, { href: '#charts-realtime', text: 'Charts (Realtime)', icon: '#speedometer2', current }),
       React.createElement(NavItem, { href: '#charts-long', text: 'Charts (Long-Term)', icon: '#speedometer2', current }),
       React.createElement(NavItem, { href: '#items', text: 'Items', icon: '#grid', current }),
@@ -369,7 +393,7 @@ function NavList({ }) {
       React.createElement(NavItem, { href: '#log', text: 'Logs', icon: '#table', current }),
       React.createElement(NavItem, { href: '#raw-data', text: 'Raw Data', icon: '#table', current })
     ),
-    React.createElement('ul', { class: 'nav nav-pills nav-flush flex-column mb-auto d-md-none d-flex text-center' },
+    React.createElement('ul', { className: 'nav nav-pills nav-flush flex-column mb-auto d-md-none d-flex text-center' },
       React.createElement(SmallNavItem, { href: '#charts-realtime', icon: '#speedometer2', current }),
       React.createElement(SmallNavItem, { href: '#charts-long', icon: '#speedometer2', current }),
       React.createElement(SmallNavItem, { href: '#items', icon: '#grid', current }),
@@ -379,76 +403,56 @@ function NavList({ }) {
     ));
 }
 
-function Sidebar({ state }) {
-  const [scrollPosition, setScrollPosition] = React.useState(0);
-
-  React.useEffect(() => {
-    const f = event => { setScrollPosition(window.scrollY); };
-    window.addEventListener('scroll', f);
-    return () => {
-      window.removeEventListener('scroll', f);
-    };
-  }, []);
-
-  let current = '';
-  if (document.getElementById('raw-data')?.offsetTop <= scrollPosition) {
-    current = '#raw-data';
-  } else if (document.getElementById('log')?.offsetTop <= scrollPosition) {
-    current = '#log';
-  } else if (document.getElementById('crafting')?.offsetTop <= scrollPosition) {
-    current = '#crafting';
-  } else if (document.getElementById('items')?.offsetTop <= scrollPosition) {
-    current = '#items';
-  } else if (document.getElementById('charts-long')?.offsetTop <= scrollPosition) {
-    current = '#charts-long';
-  } else {
-    current = '#charts-realtime';
-  }
-
+function Sidebar({ state, proxyState }) {
   return React.createElement('div', {
-    class: 'sidebar d-flex flex-shrink-0 flex-column border border-right col-2 col-md-4 col-lg-3 col-xxl-2 px-md-3 pt-3 bg-body-tertiary',
+    className: 'sidebar d-flex flex-shrink-0 flex-column border border-right col-2 col-md-4 col-lg-3 col-xxl-2 px-0 px-md-3 pt-3 bg-body-tertiary',
     style: {}
   },
-    React.createElement('div', { class: 'd-flex align-items-center mb-md-0' },
-      React.createElement('span', { class: 'd-none d-md-inline fs-5' }, 'GTNH: Skizzerz Edition'),
-      React.createElement('span', { class: 'd-md-none mx-auto fs-5' }, 'GTNH')
+    React.createElement('div', { className: 'd-flex align-items-center mb-md-0' },
+      React.createElement('span', { className: 'd-none d-md-inline fs-5' }, 'GTNH: Skizzerz Edition'),
+      React.createElement('span', { className: 'd-md-none mx-auto fs-5' }, 'GTNH')
     ),
     React.createElement('hr'),
     React.createElement(NavList),
     React.createElement('hr'),
-    React.createElement('div', {}, `Status: ${state}`)
+    React.createElement('div', {}, `Status: ${state}`,
+      React.createElement('div', { style: { float: 'right' } },
+        React.createElement(CheckBox, { state: proxyState }))),
   );
 }
 
 function App() {
   const proxyState = React.useState(false);
   const [data, status] = reloadFile((proxyState[0] ? '/fwd' : '') + "/reddisk/output.json", true);
-  const [data2, status2] = reloadFile((proxyState[0] ? '/fwd' : '') + "/reddisk/charts.jsonl", false);
+  const [data2] = reloadFile((proxyState[0] ? '/fwd' : '') + "/reddisk/charts.jsonl", false);
+  const [erl_network] = reloadFile("/erl/network.txt", false);
 
-  return React.createElement('div', { class: 'row' },
-    React.createElement(Sidebar, { state: status }),
-    React.createElement('main', { class: 'col-10 col-md-8 col-lg-9 px-md-4' },
-      React.createElement('div', { class: 'b-example-divider b-example-vr' }),
+  return React.createElement('div', { className: 'row' },
+    React.createElement(Sidebar, { state: status, proxyState }),
+    React.createElement('main', { className: 'col-10 col-md-8 col-lg-9 px-md-4' },
+      React.createElement('div', { className: 'b-example-divider b-example-vr' }),
       React.createElement('div', {},
         React.createElement('section', { id: 'charts-realtime' },
-          React.createElement('h2', null, React.createElement('a', { href: '#charts-realtime', class: 'section-link' }), 'Charts (Realtime)'),
+          React.createElement('h2', null, React.createElement('a', { href: '#charts-realtime', className: 'section-link' }), 'Charts (Realtime)'),
           React.createElement(AnyCharts, { charts: data?.charts?.d })),
         React.createElement('section', { id: 'charts-long' },
-          React.createElement('h2', null, React.createElement('a', { href: '#charts-long', class: 'section-link' }), 'Charts (Long-Term)'),
+          React.createElement('h2', null, React.createElement('a', { href: '#charts-long', className: 'section-link' }), 'Charts (Long-Term)'),
           React.createElement(AnyCharts, { charts: jsonl_to_charts(data2) })),
         React.createElement('section', { id: 'items' },
-          React.createElement('h2', null, React.createElement('a', { href: '#items', class: 'section-link' }), 'Items'),
+          React.createElement('h2', null, React.createElement('a', { href: '#items', className: 'section-link' }), 'Items'),
           React.createElement(MapDisplay, { data: data?.memon?.items })),
         React.createElement('section', { id: 'crafting' },
-          React.createElement('h2', null, React.createElement('a', { href: '#crafting', class: 'section-link' }), 'Crafting'),
+          React.createElement('h2', null, React.createElement('a', { href: '#crafting', className: 'section-link' }), 'Crafting'),
           React.createElement(CraftingMonitor, { crafting: data?.memon?.crafting })),
         React.createElement('section', { id: 'log' },
-          React.createElement('h2', null, React.createElement('a', { href: '#log', class: 'section-link' }), 'Log'),
+          React.createElement('h2', null, React.createElement('a', { href: '#log', className: 'section-link' }), 'Log'),
           React.createElement(Log, { log: data?.log })),
+        // React.createElement('section', { id: 'textfiles' },
+        //   React.createElement('h2', null, React.createElement('a', { href: '#textfiles', className: 'section-link' }), 'Text Files'),
+        //   React.createElement('p', {}, erl_network)),
         React.createElement('section', { id: 'raw-data' },
-          React.createElement('h2', null, React.createElement('a', { href: '#log', class: 'section-link' }), 'Raw Data'),
-          React.createElement(Collapsable, { label: 'Visible:', children: [JSON.stringify(data)], class: 'col' }),
-          React.createElement(CheckBox, { state: proxyState }))
+          React.createElement('h2', null, React.createElement('a', { href: '#raw-data', className: 'section-link' }), 'Raw Data'),
+          React.createElement(Collapsable, { label: 'Visible:' }, JSON.stringify(data)))
       )));
 }
 

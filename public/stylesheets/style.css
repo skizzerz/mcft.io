@@ -1,0 +1,21 @@
+a {
+  color: #00B7FF;
+}
+.collapse-content {
+  display: none;
+}
+.collapsible > label:has(> :checked) + .collapse-content {
+  display: block;
+}
+.bi {
+  vertical-align: -0.125em;
+  fill: currentColor;
+}
+.chart {
+  display: block;
+}
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: calc(100vh);
+}
