@@ -447,16 +447,15 @@ function App() {
         React.createElement('section', { id: 'log' },
           React.createElement('h2', null, React.createElement('a', { href: '#log', className: 'section-link' }), 'Log'),
           React.createElement(Log, { log: data?.log })),
-        // React.createElement('section', { id: 'textfiles' },
-        //   React.createElement('h2', null, React.createElement('a', { href: '#textfiles', className: 'section-link' }), 'Text Files'),
-        //   React.createElement('p', {}, erl_network)),
+        React.createElement('section', { id: 'textfiles' },
+          React.createElement('h2', null, React.createElement('a', { href: '#textfiles', className: 'section-link' }), 'Text Files'),
+          React.createElement('p', { style: { 'font-family': 'monospace' } }, erl_network)),
         React.createElement('section', { id: 'raw-data' },
           React.createElement('h2', null, React.createElement('a', { href: '#raw-data', className: 'section-link' }), 'Raw Data'),
           React.createElement(Collapsable, { label: 'Visible:' }, JSON.stringify(data)))
       )));
 }
 
-ReactDOM.render(
-  React.createElement(App),
-  document.getElementById('root')
-);
+//@ts-ignore
+const root = ReactDOM.createRoot(document.getElementById('root'))
+root.render(React.createElement(App))

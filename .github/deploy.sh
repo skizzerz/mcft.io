@@ -44,6 +44,8 @@ npm ci --omit dev
 ##########
 rm -rf $DESTPATH/.git
 rm -rf $DESTPATH/.github
+rm -rf $DESTPATH/.vscode
+rm -rf $DESTPATH/.devcontainer
 rm -f $DESTPATH/.gitignore
 rm -f $DESTPATH/.cpanel.yml
 
