@@ -249,7 +249,7 @@ function AnyCharts({ charts }) {
     React.createElement('div', { className: 'd-flex flex-row row' }, ...children));
 }
 
-function reloadFile(uri, isJson) {
+function reloadFile(uri, isJson, freq = 5000) {
   const [data, setData] = React.useState(isJson ? null : "");
   const [status, setStatus] = React.useState("init");
 
@@ -274,7 +274,7 @@ function reloadFile(uri, isJson) {
         setStatus(`${e}`)
       }
       if (!signal.aborted)
-        timeout = setTimeout(updateData, 5000)
+        timeout = setTimeout(updateData, freq)
     };
     let timeout = setTimeout(updateData, 0)
     return () => {
@@ -364,42 +364,35 @@ function NavList() {
     };
   }, []);
 
-  let current = '';
-  // @ts-ignore
-  if (document.getElementById('raw-data')?.offsetTop - 10 <= scrollPosition) {
-    current = '#raw-data';
-    // @ts-ignore
-  } else if (document.getElementById('log')?.offsetTop - 10 <= scrollPosition) {
-    current = '#log';
-    // @ts-ignore
-  } else if (document.getElementById('crafting')?.offsetTop - 10 <= scrollPosition) {
-    current = '#crafting';
-    // @ts-ignore
-  } else if (document.getElementById('items')?.offsetTop - 10 <= scrollPosition) {
-    current = '#items';
-    // @ts-ignore
-  } else if (document.getElementById('charts-long')?.offsetTop - 10 <= scrollPosition) {
-    current = '#charts-long';
-  } else {
-    current = '#charts-realtime';
+  const sections = [
+    { href: '#charts-realtime', text: 'Charts (Realtime)', icon: '#speedometer2' },
+    { href: '#charts-long', text: 'Charts (Long-Term)', icon: '#speedometer2' },
+    { href: '#crafting', text: 'Crafting', icon: '#table' },
+    { href: '#log', text: 'Logs', icon: '#table' },
+    { href: '#textfiles', text: 'Text Files', icon: '#table' },
+    { href: '#items', text: 'Items', icon: '#grid' },
+    { href: '#raw-data', text: 'Raw Data', icon: '#table' },
+  ]
+
+  let current = sections[0].href;
+  for (let i = sections.length; i > 1;) {
+    --i
+    const section = sections[i]
+    const offtop = document.getElementById(section.href.substring(1))?.offsetTop
+    if (offtop && offtop - 10 <= scrollPosition) {
+      current = section.href
+      break
+    }
   }
 
   return React.createElement(React.Fragment, null,
     React.createElement('ul', { className: 'nav nav-pills flex-column mb-auto d-none d-md-flex' },
-      React.createElement(NavItem, { href: '#charts-realtime', text: 'Charts (Realtime)', icon: '#speedometer2', current }),
-      React.createElement(NavItem, { href: '#charts-long', text: 'Charts (Long-Term)', icon: '#speedometer2', current }),
-      React.createElement(NavItem, { href: '#items', text: 'Items', icon: '#grid', current }),
-      React.createElement(NavItem, { href: '#crafting', text: 'Crafting', icon: '#table', current }),
-      React.createElement(NavItem, { href: '#log', text: 'Logs', icon: '#table', current }),
-      React.createElement(NavItem, { href: '#raw-data', text: 'Raw Data', icon: '#table', current })
+      ...sections.map((s) =>
+        React.createElement(NavItem, { key: s.href, ...s, current })),
     ),
     React.createElement('ul', { className: 'nav nav-pills nav-flush flex-column mb-auto d-md-none d-flex text-center' },
-      React.createElement(SmallNavItem, { href: '#charts-realtime', icon: '#speedometer2', current }),
-      React.createElement(SmallNavItem, { href: '#charts-long', icon: '#speedometer2', current }),
-      React.createElement(SmallNavItem, { href: '#items', icon: '#grid', current }),
-      React.createElement(SmallNavItem, { href: '#crafting', icon: '#table', current }),
-      React.createElement(SmallNavItem, { href: '#log', icon: '#table', current }),
-      React.createElement(SmallNavItem, { href: '#raw-data', icon: '#table', current })
+      ...sections.map((s) =>
+        React.createElement(SmallNavItem, { key: s.href, href: s.href, icon: s.icon, current })),
     ));
 }
 
@@ -425,7 +418,9 @@ function App() {
   const proxyState = React.useState(false);
   const [data, status] = reloadFile((proxyState[0] ? '/fwd' : '') + "/reddisk/output.json", true);
   const [data2] = reloadFile((proxyState[0] ? '/fwd' : '') + "/reddisk/charts.jsonl", false);
-  const [erl_network] = reloadFile("/erl/network.txt", false);
+  const [erl_network] = reloadFile("/erl/network.txt", false, 20000);
+  const [erl_cpu_status] = reloadFile("/erl/cpu_status.txt", false);
+  const [erl_gt_status] = reloadFile("/erl/gt_status.txt", false, 10000);
 
   return React.createElement('div', { className: 'row' },
     React.createElement(Sidebar, { state: status, proxyState }),
@@ -438,9 +433,6 @@ function App() {
         React.createElement('section', { id: 'charts-long' },
           React.createElement('h2', null, React.createElement('a', { href: '#charts-long', className: 'section-link' }), 'Charts (Long-Term)'),
           React.createElement(AnyCharts, { charts: jsonl_to_charts(data2) })),
-        React.createElement('section', { id: 'items' },
-          React.createElement('h2', null, React.createElement('a', { href: '#items', className: 'section-link' }), 'Items'),
-          React.createElement(MapDisplay, { data: data?.memon?.items })),
         React.createElement('section', { id: 'crafting' },
           React.createElement('h2', null, React.createElement('a', { href: '#crafting', className: 'section-link' }), 'Crafting'),
           React.createElement(CraftingMonitor, { crafting: data?.memon?.crafting })),
@@ -449,7 +441,12 @@ function App() {
           React.createElement(Log, { log: data?.log })),
         React.createElement('section', { id: 'textfiles' },
           React.createElement('h2', null, React.createElement('a', { href: '#textfiles', className: 'section-link' }), 'Text Files'),
-          React.createElement('p', { style: { 'font-family': 'monospace' } }, erl_network)),
+          React.createElement('pre', {}, erl_network),
+          React.createElement('pre', {}, erl_cpu_status),
+          React.createElement('pre', {}, erl_gt_status)),
+        React.createElement('section', { id: 'items' },
+          React.createElement('h2', null, React.createElement('a', { href: '#items', className: 'section-link' }), 'Items'),
+          React.createElement(MapDisplay, { data: data?.memon?.items })),
         React.createElement('section', { id: 'raw-data' },
           React.createElement('h2', null, React.createElement('a', { href: '#raw-data', className: 'section-link' }), 'Raw Data'),
           React.createElement(Collapsable, { label: 'Visible:' }, JSON.stringify(data)))

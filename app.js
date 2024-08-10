@@ -18,20 +18,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-if (app.get('env') === 'development') {
-  app.use("/fwd/reddisk", createProxyMiddleware({
-    target: 'http://mcft.io',
-    changeOrigin: true,
-    pathRewrite: { '^/fwd/reddisk': '/reddisk' }
+if (process.env.REDIRECT == "1") {
+  console.log("Using redirects")
+  app.use("/reddisk", createProxyMiddleware({
+    target: 'https://mcft.io/reddisk',
+    changeOrigin: true
   }))
-  app.use("/fwd/erl", createProxyMiddleware({
-    target: 'http://mcft.io',
-    changeOrigin: true,
-    pathRewrite: { '^/fwd/erl': '/erl' }
+  app.use("/erl", createProxyMiddleware({
+    target: 'https://mcft.io/erl',
+    changeOrigin: true
   }))
+} else {
+  app.use("/erl", express.static("/mnt/minecraft/oc/0c11ce4a-8e80-41a8-9a0f-72a9dad4bf47/webroot"))
+  app.use("/reddisk", express.static("/mnt/minecraft/oc/b9203fd5-03cf-469b-96e0-165f7f0e6b5b"))
 }
-app.use("/erl", express.static("/mnt/minecraft/oc/0c11ce4a-8e80-41a8-9a0f-72a9dad4bf47/webroot"))
-app.use("/reddisk", express.static("/mnt/minecraft/oc/b9203fd5-03cf-469b-96e0-165f7f0e6b5b"))
 app.use("/oreproc", express.static("/mnt/minecraft/oc/c65ea0a6-b487-4ba9-b06a-3bc0ce0647f6"))
 app.use("/ryandisk", express.static("/mnt/minecraft/oc/29a6e1dc-ac9a-4af0-a3fe-76e48cb36d6e"))
 app.use("/ryanlog", express.static("/mnt/minecraft/oc/82d19e6a-70af-4f0c-a0bd-504a1e3f028f"))
